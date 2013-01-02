@@ -1,0 +1,10 @@
+
+http://jakeii.github.com/woocommerce-pesapal/archive.html
+http://jakeii.github.com/woocommerce-pesapal/atom.xml
+http://jakeii.github.com/woocommerce-pesapal/categories.html
+http://jakeii.github.com/woocommerce-pesapal/index.html
+http://jakeii.github.com/woocommerce-pesapal/pages.html
+http://jakeii.github.com/woocommerce-pesapal/sitemap.txt
+http://jakeii.github.com/woocommerce-pesapal/tags.html
+
+http://jakeii.github.com/woocommerce-pesapal/lessons/2011/12/29/jekyll-introduction
