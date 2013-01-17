@@ -15,11 +15,23 @@ title: Pesapal Plugin for Woocommerce beta
       Download <span class="icon-download"></span>
     </a>
   </p>
-  <p>
-       <a class="btn btn-info btn-large">
-      Donate <span class="icon-credit-card"></span>
+  <div class="btn-group">
+      <a class="btn btn-warning dropdown-toggle" data-toggle="dropdown" href="#">
+        Donate <span class="icon-down-open"></span>
+      </a>
+      <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+       <li><a tabindex="-1" href="#">By Pesapal/mPesa</a></li>
+       <li><a tabindex="-1" href="#">By Paypal</a></li>      
+      </ul>
+  </div>
+  <!-- <p>
+       <a class="btn btn-info btn-small">
+      Donate with mPesa/pesapal <span class="icon-credit-card"></span>
     </a>
-  </p>
+    <a class="btn btn-info btn-small">
+      Donate with Paypal <span class="icon-credit-card"></span>
+    </a>
+  </p> -->
 </div>
 
 

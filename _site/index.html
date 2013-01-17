@@ -16,7 +16,7 @@
     <link href="/assets/themes/twitter/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="/assets/themes/twitter/css/style.css?body=1" rel="stylesheet" type="text/css" media="all">
     <link href="/assets/themes/twitter/font/entypo.css" rel="stylesheet">
-    
+
     <!-- Le fav and touch icons -->
   <!-- Update these with your own images
     <link rel="shortcut icon" href="images/favicon.ico">
@@ -53,11 +53,23 @@
       Download <span class='icon-download' />
     </a>
   </p>
-  <p>
-       <a class='btn btn-info btn-large'>
-      Donate <span class='icon-credit-card' />
+  <div class='btn-group'>
+      <a href='#' class='btn btn-warning dropdown-toggle' data-toggle='dropdown'>
+        Donate <span class='icon-down-open' />
+      </a>
+      <ul class='dropdown-menu' aria-labelledby='dLabel' role='menu'>
+       <li><a href='#' tabindex='-1'>By Pesapal/mPesa</a></li>
+       <li><a href='#' tabindex='-1'>By Paypal</a></li>      
+      </ul>
+  </div>
+  <!-- <p>
+       <a class="btn btn-info btn-small">
+      Donate with mPesa/pesapal <span class="icon-credit-card"></span>
     </a>
-  </p>
+    <a class="btn btn-info btn-small">
+      Donate with Paypal <span class="icon-credit-card"></span>
+    </a>
+  </p> -->
 </div>
   </div>
 </div>
@@ -73,7 +85,8 @@
       </footer>
 
     </div> <!-- /container -->
-
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src="/assets/themes/twitter/bootstrap/js/bootstrap.min.js"></script>
     
   </body>
 </html>
