@@ -349,8 +349,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 						
 						add_post_meta( $order_id, 'Pesapal Tracking ID', $_GET['pesapal_transaction_tracking_id']);
 						
-						//$status = $this->status_request($_GET['pesapal_transaction_tracking_id'], $_GET['pesapal_merchant_reference']);
-						$status = 'PENDING';
+						$status = $this->status_request($_GET['pesapal_transaction_tracking_id'], $_GET['pesapal_merchant_reference']);
 						switch ($status) {
 							case 'COMPLETED':
 								// hooray payment complete
