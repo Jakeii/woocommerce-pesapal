@@ -70,7 +70,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 	 */
 	function on_activate()
 	{
-		wp_schedule_event(current_time('timestamp'), 'fivemins', 'pesapal_background_payment_checks');
+		wp_schedule_event(time(), 'fivemins', 'pesapal_background_payment_checks');
 
 		//Get the table name with the WP database prefix
 		global $wpdb;
