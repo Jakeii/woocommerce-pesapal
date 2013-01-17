@@ -138,12 +138,12 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 					// Settings
 					$this->title 			= $this->settings['title'];
 					$this->description 		= $this->settings['description'];
-					$this->iframe 			= (isset($this->settings['iframe']) && $this->settings['iframe'] == 'yes' ? true : false);
+					$this->iframe 			= ($this->settings['iframe'] === 'yes') ? true : false;
 					
 					$this->secretkey 		= $this->settings['secretkey'];
 					$this->consumerkey 		= $this->settings['consumerkey'];
 					
-					$this->testmode 		= (isset($this->settings['testmode']) && $this->settings['testmode'] == 'yes' ? true : false);
+					$this->testmode 		= ($this->settings['testmode'] === 'yes') ? true : false;
 					$this->testsecretkey 	= $this->settings['testsecretkey'];
 	 				$this->testconsumerkey 	= $this->settings['testconsumerkey'];
 	 				
@@ -429,7 +429,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 					$token = $params = NULL;
 					
 					//use test vars if in testmode
-					if($this->testmode = true){
+					if($this->testmode){
 						$baseurl = $this->gatewaytesturl;
 						$consumerkey = $this->testconsumerkey;
 						$secretkey = $this->testsecretkey;
