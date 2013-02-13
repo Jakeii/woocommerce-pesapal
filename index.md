@@ -30,15 +30,10 @@ title: Pesapal Plugin for Woocommerce beta
       <div class="control-group">
         <label class="control-label" for="inputAmount">Amount</label>
         <div class="controls">
-          <input name="amount" id="inputAmount" placeholder="Amount" />
-        </div>
-      </div>
-      <div class="control-group">
-        <label class="control-label">Currency</label>
-        <div class="controls">
-          <select name="currency" id="inputCurrency">
-            <option value="KES" selected="true">Kenyan Shillings</option>
-            <option value="USD">US Dollars</option>
+          <input name="amount" id="inputAmount" placeholder="Amount" class="span2" />
+          <select name="currency" id="inputCurrency" class="span1" style="margin-left: 16px;">
+            <option value="KES" selected="true">KES</option>
+            <option value="USD">USD</option>
           </select>
         </div>
       </div>
