@@ -52,15 +52,38 @@
     <a href='https://github.com/Jakeii/woocommerce-pesapal/archive/master.zip' class='btn btn-success btn-large'>
       Download <span class='icon-download' />
     </a>
+    <a href='#' class='btn btn-warning btn-large' id='donatePesapal'>Donate :)</a>
   </p>
-  <div class='btn-group'>
-      <a href='#' class='btn btn-warning dropdown-toggle' data-toggle='dropdown'>
-        Donate <span class='icon-down-open' />
-      </a>
-      <ul class='dropdown-menu' aria-labelledby='dLabel' role='menu'>
-       <li><a href='#' tabindex='-1'>By Pesapal/mPesa</a></li>
-       <li><a href='#' tabindex='-1'>By Paypal</a></li>      
-      </ul>
+  <div class='row' />
+  <div class='well span6' style='display:none;' id='donateForm'>
+    <h2>Donate</h2>
+    <p class='lead'>Thank you very much for donating!</p>
+    <form class='form-horizontal' action='http://pesapal.donate.bodhi.io' method='post'>
+      <div class='control-group'>
+        <label class='control-label' for='inputEmail'>Email</label>
+        <div class='controls'>
+          <input name='email' type='text' placeholder='Email' id='inputEmail' />
+        </div>
+      </div>
+      <div class='control-group'>
+        <label class='control-label' for='inputAmount'>Amount</label>
+        <div class='controls'>
+          <input name='amount' placeholder='Amount' id='inputAmount' />
+        </div>
+      </div>
+      <div class='control-group'>
+        <label class='control-label'>Currency</label>
+        <div class='controls'>
+          <select name='currency' id='inputCurrency'>
+            <option value='KES' selected='true'>Kenyan Shillings</option>
+            <option value='USD'>US Dollars</option>
+            <option value='GBP'>British Pound</option>
+            <option value='EUR'>Euro</option>
+          </select>
+        </div>
+      </div>
+      <button type='submit' class='btn btn-primary btn-large btn-block'>Donate</button>
+    </form>
   </div>
   <!-- <p>
        <a class="btn btn-info btn-small">
@@ -86,7 +109,10 @@
 
     </div> <!-- /container -->
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.9.0/jquery.validate.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery.form/3.24/jquery.form.min.js"></script>
     <script src="/assets/themes/twitter/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/assets/themes/twitter/bootstrap/js/main.js"></script>
     
   </body>
 </html>
