@@ -14,15 +14,45 @@ title: Pesapal Plugin for Woocommerce beta
     <a class="btn btn-success btn-large" href="https://github.com/Jakeii/woocommerce-pesapal/archive/master.zip">
       Download <span class="icon-download"></span>
     </a>
-  </p>
-  <div class="btn-group">
-      <a class="btn btn-warning dropdown-toggle" data-toggle="dropdown" href="#">
+    <div class="btn-group">
+      <a id="donate" class="btn btn-warning btn-large dropdown-toggle" data-toggle="dropdown" href="#">
         Donate <span class="icon-down-open"></span>
       </a>
       <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-       <li><a tabindex="-1" href="#">By Pesapal/mPesa</a></li>
+       <li><a id="donatePesapal" tabindex="-1" href="#">By Pesapal/mPesa</a></li>
        <li><a tabindex="-1" href="#">By Paypal</a></li>      
       </ul>
+    </div>
+  </p>
+  <div id="donateForm" class="well" style="display:none;">
+    <h1>Donate</h1>
+    <p class="lead">Thank you very much for donating!</p>
+    <form class="form-horizontal">
+      <div class="control-group">
+        <label class="control-label" for="inputEmail">Email</label>
+        <div class="controls">
+          <input name="email" type="text" id="inputEmail" placeholder="Email">
+        </div>
+      </div>
+      <div class="control-group">
+        <label class="control-label" for="inputAmount">Amount</label>
+        <div class="controls">
+          <input name="amount" id="inputAmount" placeholder="Amount">
+        </div>
+      </div>
+      <div class="control-group">
+        <label class="control-label">Currency</label>
+        <div class="controls">
+          <select name="currency" id="inputCurrency">
+            <option value="KES" selected>Kenyan Shillings</option>
+            <option value="USD">US Dollars</option>
+            <option value="GBP">British Pound</option>
+            <option value="EUR">Euro</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn">Donate</button>
+    </form>
   </div>
   <!-- <p>
        <a class="btn btn-info btn-small">
