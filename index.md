@@ -39,8 +39,6 @@ title: Pesapal Plugin for Woocommerce beta
           <select name="currency" id="inputCurrency">
             <option value="KES" selected="true">Kenyan Shillings</option>
             <option value="USD">US Dollars</option>
-            <option value="GBP">British Pound</option>
-            <option value="EUR">Euro</option>
           </select>
         </div>
       </div>
