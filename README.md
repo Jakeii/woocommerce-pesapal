@@ -6,6 +6,8 @@ Simple and easy to use plugin for pesapal.com payment gateway.
 
 Please raise any issues though github, thanks.
 
+If you like this plugin consider [donating](http://jakeii.github.com/woocommerce-pesapal) a few bob for a coffee :)
+
 ##Requirements
 (Same as Woocommerce)
 * Wordpress 3.3+
@@ -15,8 +17,9 @@ Please raise any issues though github, thanks.
 ##Installation
 * Simply clone the repo or download the zip and copy the woocommerce-pesapal directory to the /wp-content/plugins directory of your wordpress installation.
 * Enable the plugin in Wordpress.
-* Enter your consumer and secret key in the Payment Gateway Settings of the Woocommerce settings page.
+* Enter your consumer and secret key in the Payment Gateway section of the Woocommerce settings page.
 * Enable the gateway.
+* **Test before production!**
 
 ##Note
 There is an option to use an iframe rather than redirecting to Pesapal, although the iframe will use SSL to show the payment page, customers paying won't be able to see this. I recommend that you use an SSL Certificate and use the "force secure checkout" option in Woocommerce (To show the https padlock in the url or status bar), and ensure that your customers know that any details they enter will be safe.
