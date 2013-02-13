@@ -25,8 +25,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USAv
 */
 
+// Check for woocommerce
 if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
 
+	// Hooks for adding/ removing the database table, and the wpcron to check them
 	register_activation_hook( __FILE__, 'on_activate' );
 	register_deactivation_hook( __FILE__, 'on_deactivate' );
 	register_uninstall_hook( __FILE__, 'on_uninstall' );
@@ -70,6 +72,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 	 */
 	function on_activate()
 	{
+		// Wp_cron checks pending payments in the background
 		wp_schedule_event(time(), 'fivemins', 'pesapal_background_payment_checks');
 
 		//Get the table name with the WP database prefix
@@ -102,6 +105,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 	 */
 	function on_uninstall()
 	{
+		// Clean up i.e. delete the table, wp_cron already removed on deacivate
 		delete_option('pesapal_db_version');
 
 		global $wpdb;
