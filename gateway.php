@@ -507,6 +507,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
             LastName=\"" . $pesapal_args['last_name'] . "\"
             Email=\"" . $pesapal_args['email'] . "\"
             PhoneNumber=\"" . $pesapal_args['phone'] . "\"
+            Currency=\"" . get_woocommerce_currency() . "\"
             xmlns=\"http://www.pesapal.com\" />
             <lineitems>";
           foreach($cart as $item){
