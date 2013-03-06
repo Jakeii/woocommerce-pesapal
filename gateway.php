@@ -140,19 +140,19 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           $this->init_settings();
           
           // Settings
-          $this->title      = $this->settings['title'];
-          $this->description    = $this->settings['description'];
-          $this->iframe       = ($this->settings['iframe'] === 'yes') ? true : false;
+          $this->title      = $this->get_option('title');
+          $this->description    = $this->get_option('description');
+          $this->iframe       = ($this->get_option('iframe') === 'yes') ? true : false;
           
-          $this->secretkey    = $this->settings['secretkey'];
-          $this->consumerkey    = $this->settings['consumerkey'];
+          $this->secretkey    = $this->get_option('secretkey');
+          $this->consumerkey    = $this->get_option('consumerkey');
           
-          $this->testmode     = ($this->settings['testmode'] === 'yes') ? true : false;
-          $this->testsecretkey  = $this->settings['testsecretkey'];
-          $this->testconsumerkey  = $this->settings['testconsumerkey'];
+          $this->testmode     = ($this->get_option('testmode') === 'yes') ? true : false;
+          $this->testsecretkey  = $this->get_option('testsecretkey');
+          $this->testconsumerkey  = $this->get_option('testconsumerkey');
           
           // Actions
-          add_action('woocommerce_update_options_payment_gateways', array(&$this, 'process_admin_options'));
+          add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
           
           // If user wants to use an iframe add the iframe code
           if($this->iframe) { add_action('woocommerce_receipt_pesapal', array(&$this, 'payment_page')); }
