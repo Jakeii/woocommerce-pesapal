@@ -43,11 +43,12 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
   function add_kenya_shilling( $currencies ) {
     if(!isset($currencies['KES'])||!isset($currencies['KSH'])){
        $currencies['KES'] = __( 'Kenyan Shilling', 'woocommerce' );
-       add_filter('woocommerce_currency_symbol', 'add_kenya_shilling_symbol', 10, 2);
+       
        return $currencies;
       }
   }
 
+  add_filter('woocommerce_currency_symbol', 'add_kenya_shilling_symbol', 10, 2);
   function add_kenya_shilling_symbol( $currency_symbol, $currency ) {
      switch( $currency ) {
         case 'KES': $currency_symbol = '/='; break;
