@@ -184,11 +184,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
               'description' => __( 'This is the description which the user sees during checkout.', 'woocommerce' ),
               'default' => __("Payment via Pesapal Gateway, you can pay by either credit/debit card or use mobile payment option such as Mpesa.", 'woocommerce')
             ),
-            'iframe' => array(
-              'title' => __( 'Use iframe', 'woothemes' ),
               'type' => 'checkbox',
-              'label' => __( 'Use iframe', 'woothemes' ),
-              'description' => __( 'Use pay page and iframe rather than redirect to pesapal. RECOMMENDED: Use SSL on the payment page (WooCommerce > Settings > General > Force secure checkout. Although the iframe is secure, users will not see so (i.e. HTTPS padlock or greenbar).', 'woothemes' ),
               'default' => 'no'
             ),
             'consumerkey' => array(
@@ -301,20 +297,11 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
         
           $order = &new WC_Order( $order_id );
         
-          if($this->iframe){
-            // Redirect to payment page
-            return array(
-              'result'    => 'success',
-              'redirect'  => add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('pay'))))
-            );
-          }else {
-            // Redirect to pesapal
-            $url = $this->create_url($order_id);
-            
-            return array(
-              'result'    => 'success',
-              'redirect'  => $url
-            );
+          // Redirect to payment page
+          return array(
+            'result'    => 'success',
+            'redirect'  => add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('pay'))))
+          );
           }
           
         
@@ -451,7 +438,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
             $consumerkey = $this->consumerkey;
             $secretkey = $this->secretkey;
           }
-          
+
           $thankyou = add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('pay'))));
           
           $consumer = new OAuthConsumer($consumerkey, $secretkey);
@@ -461,7 +448,8 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           $url->set_parameter("pesapal_request_data", $order_xml);
           $url->sign_request($signature_method, $consumer, $token);
           
-          return htmlentities($url);
+
+          return $url;
         }
         
         /**
@@ -520,7 +508,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           }
           $xml .= "</lineitems></pesapaldirectorderinfo>";
           
-          return $xml;
+          return htmlentities($xml);
         }
         
         /**
