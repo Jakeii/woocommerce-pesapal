@@ -3,7 +3,7 @@
 Plugin Name: Woocommerce Pesapal Payment Gateway
 Plugin URI: http://bodhi.io
 Description: Allows use of kenyan payment processor Pesapal - http://pesapal.com.
-Version: 0.0.4
+Version: 0.2.0
 Author: Jake Lee Kennedy
 Author URI: http://bodhi.io
 License: GPLv3
@@ -29,8 +29,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USAv
 if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
 
   // Hooks for adding/ removing the database table, and the wpcron to check them
-  register_activation_hook( __FILE__, 'on_activate' );
-  register_deactivation_hook( __FILE__, 'on_deactivate' );
+  register_activation_hook( __FILE__, 'create_background_checks' );
+  register_deactivation_hook( __FILE__, 'remove_background_checks' );
   register_uninstall_hook( __FILE__, 'on_uninstall' );
 
   // include OAuth
@@ -71,7 +71,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
    * Activation, create processing order table, and table version option
    * @return void
    */
-  function on_activate()
+  function create_background_checks()
   {
     // Wp_cron checks pending payments in the background
     wp_schedule_event(time(), 'fivemins', 'pesapal_background_payment_checks');
@@ -94,7 +94,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
     add_option('pesapal_db_version', $db_version);
   } 
 
-  function on_deactivate()
+  function remove_background_checks()
   {
     $next_sheduled = wp_next_scheduled( 'pesapal_background_payment_checks' );
     wp_unschedule_event($next_sheduled, 'pesapal_background_payment_checks');
@@ -135,6 +135,9 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           // Gateway status URLs
           $this->statusurl = 'http://pesapal.com/api/querypaymentstatus';
           $this->statustesturl = 'http://demo.pesapal.com/api/querypaymentstatus';
+
+          // IPN Request URL
+          $this->notify_url   = str_replace( 'https:', 'http:', add_query_arg( 'wc-api', 'WC_Pesapal_Gateway', home_url( '/' ) ) );
           
           $this->init_form_fields();
           
@@ -143,7 +146,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           // Settings
           $this->title      = $this->get_option('title');
           $this->description    = $this->get_option('description');
-          $this->iframe       = ($this->get_option('iframe') === 'yes') ? true : false;
+          $this->ipn       = ($this->get_option('ipn') === 'yes') ? true : false;
           
           $this->secretkey    = $this->get_option('secretkey');
           $this->consumerkey    = $this->get_option('consumerkey');
@@ -162,7 +165,10 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           add_action('woocommerce_thankyou_pesapal', array(&$this, 'thankyou_page'));
 
           add_action('pesapal_background_payment_checks', array($this, 'background_check_payment_status'));
+
+          add_action( 'woocommerce_api_wc_pesapal_gateway', array( $this, 'ipn_response' ) );
         
+          add_action('pesapal_process_valid_ipn_request', array($this, 'process_valid_ipn_request'));
         }
         
         function init_form_fields() {
@@ -185,8 +191,18 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
               'description' => __( 'This is the description which the user sees during checkout.', 'woocommerce' ),
               'default' => __("Payment via Pesapal Gateway, you can pay by either credit/debit card or use mobile payment option such as Mpesa.", 'woocommerce')
             ),
+            'ipn' => array(
+              'title' => __( 'Use IPN', 'woothemes' ),
               'type' => 'checkbox',
+              'label' => __( 'Use IPN', 'woothemes' ),
+              'description' => __( 'Pesapal has the ability to send your site an Instant Payment Notification whenever there is an order update. It is highly reccomended that you enable this, as there are some issues with the "background" status checking. It is disabled by default because the IPN URL needs to be entered in the pesapal control panel.', 'woothemes' ),
               'default' => 'no'
+            ),
+            'ipnurl' => array(
+              'title' => __( 'IPN URL', 'woothemes' ),
+              'type' => 'text',
+              'description' => __( 'This is the IPN URL that you must enter in the Pesapal control panel. (This is not editable)', 'woothemes' ),
+              'default' => $this->notify_url
             ),
             'consumerkey' => array(
               'title' => __( 'Pesapal Consumer Key', 'woothemes' ),
@@ -236,6 +252,8 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           <script type="text/javascript">
           jQuery(function(){
             var testMode = jQuery("#woocommerce_pesapal_testmode");
+            var ipn = jQuery("#woocommerce_pesapal_ipn");
+            var ipnurl = jQuery("#woocommerce_pesapal_ipnurl");
             var consumer = jQuery("#woocommerce_pesapal_testconsumerkey");
             var secrect = jQuery("#woocommerce_pesapal_testsecretkey");
             
@@ -243,24 +261,35 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
               consumer.parents("tr").css("display","none");
               secrect.parents("tr").css("display","none");
             }
-                      
-              // Add onclick handler to checkbox w/id checkme
-               testMode.click(function(){
             
+            if (ipn.is(":not(:checked)")){
+              ipnurl.parents("tr").css("display","none");
+            } 
+
+            // Add onclick handler to checkbox w/id checkme
+            testMode.click(function(){            
               // If checked
-              if (testMode.is(":checked"))
-              {
+              if (testMode.is(":checked")) {
                 //show the hidden div
                 consumer.parents("tr").show("fast");
                 secrect.parents("tr").show("fast");
-              }
-              else
-              {
+              } else {
                 //otherwise, hide it
                 consumer.parents("tr").hide("fast");
                 secrect.parents("tr").hide("fast");
               }
-              });
+            });
+
+            ipn.click(function(){            
+              // If checked
+              if (ipn.is(":checked")) {
+                //show the hidden div
+                ipnurl.parents("tr").show("fast");
+              } else {
+                //otherwise, hide it
+                ipnurl.parents("tr").hide("fast");
+              }
+            });
 
           });
           </script>
@@ -341,36 +370,13 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
             
             add_post_meta( $order_id, 'Pesapal Tracking ID', $_GET['pesapal_transaction_tracking_id']);
             
-            // Seems to be an issue with updating status when checking so soon after transaction.
-            
-            // $status = $this->status_request($_GET['pesapal_transaction_tracking_id'], $_GET['pesapal_merchant_reference']);
-            // switch ($status) {
-            //  case 'COMPLETED':
-            //    // hooray payment complete
-            //    $order->add_order_note( __('Payment confirmed.', 'woothemes') );
-            //    $order->payment_complete();
-            //    break;
-            //  case 'FAILED':
-            //    // aw, payment failed
-            //    $order->update_status('failed',  __('Payment denied by gateway.', 'woocommerce'));
-            //    break;
-            //  case false:
-            //  case 'PENDING':
-            //    // not sure yet, add to list of payments to check every 5 minutes
-            //    $tracking_id = $_GET['pesapal_transaction_tracking_id'];
+            if(!$this->ipn){
+              $tracking_id = $_GET['pesapal_transaction_tracking_id'];
 
-            //    global $wpdb;
-            //    $table_name = $wpdb->prefix . 'pesapal_queue';
-            //    $wpdb->insert($table_name, array('order_id' => $order_id, 'tracking_id' => $tracking_id, 'time' => current_time('mysql')), array('%d', '%s', '%s'));
-            //    break;
-            // }
-            
-            $tracking_id = $_GET['pesapal_transaction_tracking_id'];
-
-            global $wpdb;
-            $table_name = $wpdb->prefix . 'pesapal_queue';
-            $wpdb->insert($table_name, array('order_id' => $order_id, 'tracking_id' => $tracking_id, 'time' => current_time('mysql')), array('%d', '%s', '%s'));
-            
+              global $wpdb;
+              $table_name = $wpdb->prefix . 'pesapal_queue';
+              $wpdb->insert($table_name, array('order_id' => $order_id, 'tracking_id' => $tracking_id, 'time' => current_time('mysql')), array('%d', '%s', '%s'));
+            }
             
             wp_redirect(add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('thanks')))));
           }
@@ -555,6 +561,64 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
             return $elements[1];
           }
           return false;
+        }
+
+        /**
+         * IPN Response
+         *
+         * @return null
+         * @author Jake Lee Kennedy
+         **/
+        public function ipn_response()
+        {
+          @ob_clean();
+
+          error_log(print_r($_GET, true));
+
+          if(!empty($_GET['pesapal_notification_type'])&&!empty($_GET['pesapal_transaction_tracking_id'])&&!empty($_GET['pesapal_merchant_reference'])) {
+            if($_GET['pesapal_notification_type']==='CHANGE') {
+
+              status_header(200);
+              nocache_headers();
+              header( 'Content-Type: text/plain; charset=utf-8' );
+              
+              // Get rid of first query param
+              echo substr($_SERVER['QUERY_STRING'], 26);
+              
+              $this->process_valid_ipn_request($_GET['pesapal_transaction_tracking_id'], $_GET['pesapal_merchant_reference']);
+
+              die();
+
+            } else {
+              wp_die( "Pesapal IPN Request Failure" );
+            }
+          } else {
+            wp_die( "Pesapal IPN Request Failure" );
+          }
+        }
+
+
+        public function process_valid_ipn_request($ttid, $merchant_ref)
+        {
+
+          $order = &new WC_Order( $merchant_ref );
+
+          if($order->status==="pending") {
+
+            $status = $this->status_request($ttid, $merchant_ref);
+
+            switch ($status) {
+              case 'COMPLETED':
+                // hooray payment complete
+                $order->add_order_note( __('Payment confirmed.', 'woothemes') );
+                $order->payment_complete(); 
+                break;
+              case 'FAILED':
+                // aw, payment failed
+                $order->update_status('failed',  __('Payment denied by gateway.', 'woocommerce'));
+                break;
+            }
+          }
         }
           
       } // END WC_Pesapal_Gateway Class
