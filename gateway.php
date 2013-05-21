@@ -3,7 +3,7 @@
 Plugin Name: Woocommerce Pesapal Payment Gateway
 Plugin URI: http://bodhi.io
 Description: Allows use of kenyan payment processor Pesapal - http://pesapal.com.
-Version: 0.5.2
+Version: 0.5.3
 Author: Jake Lee Kennedy
 Author URI: http://bodhi.io
 License: GPLv3
@@ -158,8 +158,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           // Actions
           add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
           
-          // If user wants to use an iframe add the iframe code
-          if($this->iframe) { add_action('woocommerce_receipt_pesapal', array(&$this, 'payment_page')); }
+          add_action('woocommerce_receipt_pesapal', array(&$this, 'payment_page'));
           
           add_action('before_woocommerce_pay', array(&$this, 'before_pay'));
           add_action('woocommerce_thankyou_pesapal', array(&$this, 'thankyou_page'));
