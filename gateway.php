@@ -129,11 +129,11 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           $this->has_fields = false;
           
           // Gateway payment URLs
-          $this->gatewayurl = 'https://pesapal.com/api/PostPesapalDirectOrderV4';
+          $this->gatewayurl = 'https://www.pesapal.com/api/PostPesapalDirectOrderV4';
           $this->gatewaytesturl = 'https://demo.pesapal.com/api/PostPesapalDirectOrderV4';
           
           // Gateway status URLs
-          $this->statusurl = 'http://pesapal.com/api/querypaymentstatus';
+          $this->statusurl = 'http://www.pesapal.com/api/querypaymentstatus';
           $this->statustesturl = 'http://demo.pesapal.com/api/querypaymentstatus';
 
           // IPN Request URL
@@ -161,6 +161,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           add_action('woocommerce_receipt_pesapal', array(&$this, 'payment_page'));
           
           add_action('before_woocommerce_pay', array(&$this, 'before_pay'));
+
           add_action('woocommerce_thankyou_pesapal', array(&$this, 'thankyou_page'));
 
           add_action('pesapal_background_payment_checks', array($this, 'background_check_payment_status'));
@@ -344,7 +345,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
         function payment_page($order_id){
           $url = $this->create_url($order_id);
           ?>
-          <iframe src="<?php echo $url;?>" width="100%" height="620px"  scrolling="no" frameBorder="0">
+          <iframe src="<?php echo $url; ?>" width="100%" height="620px"  scrolling="no" frameBorder="0">
             <p>Browser unable to load iFrame</p>
           </iframe>
           <?php
