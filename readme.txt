@@ -3,18 +3,18 @@ Contributors: Jakeii
 Donate link: http://jakeii.github.com/woocommerce-pesapal/
 Tags: pesapal, woocommerce, ecommerce, gateway, payment
 Requires at least: 3.3
-Tested up to: 3.5.1
-Stable tag: 0.5.4 beta
+Tested up to: 3.7.1
+Stable tag: 1.0.0
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
-
-Simple and easy to use plugin for pesapal.com payment gateway.
 
 == Description ==
 
 Simple and easy to use plugin for pesapal.com payment gateway.
 
-**This plugin is in BETA and I would not recommend using it in a production environment without thorough testing.**
+Please raise any issues though github, thanks.
+
+If you like this plugin consider [donating](http://jakeii.github.com/woocommerce-pesapal) a few bob for a coffee :)
 
 = Please Note =
 Not using an iframe has been disabled/removed because it causes to much trouble.

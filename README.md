@@ -1,8 +1,6 @@
-#Pesapal Plugin for Woocommerce beta - Version 0.5.4
+#Pesapal Plugin for Woocommerce beta - Version 1.0.0
 
 Simple and easy to use plugin for pesapal.com payment gateway.
-
-**This plugin is in BETA and I would not recommend using it in a production environment without thorough testing.**
 
 Please raise any issues though github, thanks.
 
@@ -19,7 +17,7 @@ Install by simply searching for the plugin within the wordpress plugin repositor
 
 **OR**
 
-* Simply clone the repo or download the zip and copy the woocommerce-pesapal directory to the /wp-content/plugins directory of your wordpress installation.
+* Clone the repo or download the zip and copy the woocommerce-pesapal directory to the /wp-content/plugins directory of your wordpress installation.
 * Enable the plugin in Wordpress.
 * Enter your consumer and secret key in the Payment Gateway section of the Woocommerce settings page.
 * Enable the gateway.

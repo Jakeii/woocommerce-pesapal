@@ -122,25 +122,42 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
       
       class WC_Pesapal_Gateway extends WC_Payment_Gateway {
 
-        function __construct()
-        {
-          $this->id = 'pesapal';
-          $this->method_title     = __('Pesapal', 'woocommerce');
-          $this->has_fields = false;
+        function __construct(){
+          global $woocommerce;
+          $this->id           = 'pesapal';
+          $this->method_title = __('Pesapal', 'woocommerce');
+          $this->has_fields   = false;
+          $this->testmode     = ($this->get_option('testmode') === 'yes') ? true : false;
+          $this->debug	      = $this->get_option( 'debug' );
+          
+          // Logs
+	  if ( 'yes' == $this->debug )
+            $this->log = $woocommerce->logger();
+          
+          if($this->testmode){
+            $api                    = 'http://demo.pesapal.com/';
+            $this->consumer_key     = $this->get_option('testconsumerkey');
+            $this->consumer_secret  = $this->get_option('testsecretkey');
+          }
+          else{
+            $api                    = 'https://www.pesapal.com/';
+            $this->consumer_key     = $this->get_option('consumerkey');
+            $this->consumer_secret  = $this->get_option('secretkey');
+          }
+          
+          $this->consumer                         = new OAuthConsumer($this->consumer_key, $this->consumer_secret);
+          $this->signature_method                 = new OAuthSignatureMethod_HMAC_SHA1();
+          $this->token = $this->params            = NULL;
           
           // Gateway payment URLs
-          $this->gatewayurl = 'https://www.pesapal.com/api/PostPesapalDirectOrderV4';
-          $this->gatewaytesturl = 'https://demo.pesapal.com/api/PostPesapalDirectOrderV4';
-          
-          // Gateway status URLs
-          $this->statusurl = 'http://www.pesapal.com/api/querypaymentstatus';
-          $this->statustesturl = 'http://demo.pesapal.com/api/querypaymentstatus';
+          $this->gatewayURL                       = $api.'api/PostPesapalDirectOrderV4';
+          $this->QueryPaymentStatus 		  = $api.'API/QueryPaymentStatus';
+	  $this->QueryPaymentStatusByMerchantRef  = $api.'API/QueryPaymentStatusByMerchantRef';
+	  $this->querypaymentdetails 		  = $api.'API/querypaymentdetails';
 
           // IPN Request URL
           $this->notify_url   = str_replace( 'https:', 'http:', add_query_arg( 'wc-api', 'WC_Pesapal_Gateway', home_url( '/' ) ) );
-          
           $this->init_form_fields();
-          
           $this->init_settings();
           
           // Settings
@@ -148,26 +165,13 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           $this->description    = $this->get_option('description');
           $this->ipn       = ($this->get_option('ipn') === 'yes') ? true : false;
           
-          $this->secretkey    = $this->get_option('secretkey');
-          $this->consumerkey    = $this->get_option('consumerkey');
-          
-          $this->testmode     = ($this->get_option('testmode') === 'yes') ? true : false;
-          $this->testsecretkey  = $this->get_option('testsecretkey');
-          $this->testconsumerkey  = $this->get_option('testconsumerkey');
-          
           // Actions
           add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
-          
           add_action('woocommerce_receipt_pesapal', array(&$this, 'payment_page'));
-          
           add_action('before_woocommerce_pay', array(&$this, 'before_pay'));
-
           add_action('woocommerce_thankyou_pesapal', array(&$this, 'thankyou_page'));
-
           add_action('pesapal_background_payment_checks', array($this, 'background_check_payment_status'));
-
           add_action( 'woocommerce_api_wc_pesapal_gateway', array( $this, 'ipn_response' ) );
-        
           add_action('pesapal_process_valid_ipn_request', array($this, 'process_valid_ipn_request'));
         }
         
@@ -229,6 +233,14 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
               'description' => __( 'Your demo Pesapal consumer key which can be seen at demo.pesapal.com.', 'woothemes' ),
               'default' => ''
             ),
+            'debug' => array(
+			'title' => __( 'Debug Log', 'woocommerce' ),
+			'type' => 'checkbox',
+			'label' => __( 'Enable logging', 'woocommerce' ),
+			'default' => 'no',
+			'description' => sprintf( __( 'Log PesaPal events, such as IPN requests, inside <code>woocommerce/logs/pesapal-%s.txt</code>', 'woocommerce' ), sanitize_file_name( wp_hash( 'pesapal' ) ) ),
+		    ),
+            
             'testsecretkey' => array(
               'title' => __( 'Pesapal Demo Secret Key', 'woothemes' ),
               'type' => 'text',
@@ -238,11 +250,16 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           );
         }
         
-        public function admin_options() {
-          
-          ?>
+        public function admin_options() { ?>
+        
           <h3><?php _e('Pesapal Payment', 'woothemes'); ?></h3>
-          <p><?php _e('Allows use of the Pesapal Payment Gateway, all you need is an account at pesapal.com and your consumer and secret key.', 'woothemes'); ?></p>
+          <p>
+            <?php _e('Allows use of the Pesapal Payment Gateway, all you need is an account at pesapal.com and your consumer and secret key.<br />', 'woothemes'); ?>
+            <?php _e('<a href="http://docs.woothemes.com/document/managing-orders/">Click here </a> to learn about the various woocommerce Payment statuses.<br /><br />', 'woothemes');?>
+            <?php _e('<strong>Developer: </strong>Jakeii<br />', 'woothemes'); ?>
+            <?php _e('<strong>Contributors: </strong>PesaPal<br />', 'woothemes'); ?>
+            <?php _e('<strong>Donate link:  </strong><a href="http://jakeii.github.com/woocommerce-pesapal" target="_blank"> http://jakeii.github.com/woocommerce-pesapal</a>', 'woothemes'); ?>
+          </p>
           <table class="form-table">
           <?php
             // Generate the HTML For the settings form.
@@ -345,7 +362,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
         function payment_page($order_id){
           $url = $this->create_url($order_id);
           ?>
-          <iframe src="<?php echo $url; ?>" width="100%" height="620px"  scrolling="no" frameBorder="0">
+          <iframe src="<?php echo $url; ?>" width="100%" height="700px"  scrolling="yes" frameBorder="0">
             <p>Browser unable to load iFrame</p>
           </iframe>
           <?php
@@ -363,11 +380,20 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           if(isset($_GET['pesapal_transaction_tracking_id'])){
             
             $order_id = $_GET['order'];
-            $order = &new WC_Order( $order_id );
+            $order    = &new WC_Order( $order_id );
+            $pesapalMerchantReference = $_GET['pesapal_merchant_reference'];
+            $pesapalTrackingId        = $_GET['pesapal_transaction_tracking_id'];
+            
+            //$status	        = $this->checkTransactionStatus($pesapalMerchantReference);
+            //$status 	        = $this->checkTransactionStatus($pesapalMerchantReference,$pesapalTrackingId);
+            $transactionDetails	= $this->getTransactionDetails($pesapalMerchantReference,$pesapalTrackingId);
             
             $order->add_order_note( __('Payment accepted, awaiting confirmation.', 'woothemes') );
+            add_post_meta( $order_id, '_order_pesapal_transaction_tracking_id', $transactionDetails['pesapal_transaction_tracking_id']);
+            add_post_meta( $order_id, '_order_pesapal_payment_method', $transactionDetails['payment_method']);
             
-            add_post_meta( $order_id, 'Pesapal Tracking ID', $_GET['pesapal_transaction_tracking_id']);
+            
+            $dbUpdateSuccessful = add_post_meta( $order_id, '_order_payment_method', $transactionDetails['payment_method']);
             
             if(!$this->ipn){
               $tracking_id = $_GET['pesapal_transaction_tracking_id'];
@@ -425,34 +451,16 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
          * @return string
          * @author Jake Lee Kennedy
          **/
-        function create_url($order_id)
-        {
-          $order = &new WC_Order( $order_id );
+        function create_url($order_id){
+          $order            = &new WC_Order( $order_id );
+          $order_xml        = $this->pesapal_xml($order_id);
+          $callback_url     = add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('pay'))));
           
-          $order_xml = $this->pesapal_xml($order_id);
           
-          $signature_method = new OAuthSignatureMethod_HMAC_SHA1();
-          $token = $params = NULL;
-          
-          //use test vars if in testmode
-          if($this->testmode){
-            $baseurl = $this->gatewaytesturl;
-            $consumerkey = $this->testconsumerkey;
-            $secretkey = $this->testsecretkey;
-          } else {
-            $baseurl = $this->gatewayurl;
-            $consumerkey = $this->consumerkey;
-            $secretkey = $this->secretkey;
-          }
-
-          $thankyou = add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('pay'))));
-          
-          $consumer = new OAuthConsumer($consumerkey, $secretkey);
-          
-          $url = OAuthRequest::from_consumer_and_token($consumer, $token, "GET", $baseurl, $params);
-          $url->set_parameter("oauth_callback", $thankyou);
+          $url = OAuthRequest::from_consumer_and_token($this->consumer, $this->token, "GET", $this->gatewayURL, $this->params);
+          $url->set_parameter("oauth_callback", $callback_url);
           $url->set_parameter("pesapal_request_data", $order_xml);
-          $url->sign_request($signature_method, $consumer, $token);
+          $url->sign_request($this->signature_method, $this->consumer, $this->token);
           
 
           return $url;
@@ -466,16 +474,13 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
          **/
         function pesapal_xml($order_id) {
           
-          $order = &new WC_Order( $order_id );
-          
-          $pesapal_args['total'] = $order->get_total();
-                    
-          $pesapal_args['reference'] = $order_id;
-          
+          $order                      = &new WC_Order( $order_id );
+          $pesapal_args['total']      = $order->get_total();
+          $pesapal_args['reference']  = $order_id;
           $pesapal_args['first_name'] = $order->billing_first_name;
-          $pesapal_args['last_name'] = $order->billing_last_name;
-          $pesapal_args['email'] = $order->billing_email;
-          $pesapal_args['phone'] = $order->billing_phone;
+          $pesapal_args['last_name']  = $order->billing_last_name;
+          $pesapal_args['email']      = $order->billing_email;
+          $pesapal_args['phone']      = $order->billing_phone;
           
           $i = 0;
           foreach($order->get_items() as $item){
@@ -522,103 +527,209 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
          *
          * @return object
          * @author Jake Lee Kennedy
+         * @modifiedBy PesaPal
          **/
-        function status_request($transaction_id, $merchant_ref)
-        {
-          $token = $params = NULL;
-          
-          //use test vars if in testmode
-            if($this->testmode = true){
-            $baseurl = $this->statustesturl;
-            $consumerkey = $this->testconsumerkey;
-            $secretkey = $this->testsecretkey;
-            } else {
-            $baseurl = $this->statusurl;
-            $consumerkey = $this->consumerkey;
-            $secretkey = $this->secretkey;
-            }
-            
-          $consumer = new OAuthConsumer($consumerkey, $secretkey);
-          $signature_method = new OAuthSignatureMethod_HMAC_SHA1();
+        function status_request($transaction_id, $merchant_ref){
 
-          $request_status = OAuthRequest::from_consumer_and_token($consumer, $token, "GET", $baseurl, $params);
+          $request_status   = OAuthRequest::from_consumer_and_token($this->consumer, $this->token, "GET", $this->gatewayURL, $this->params);
           $request_status->set_parameter("pesapal_merchant_reference", $merchant_ref);
           $request_status->set_parameter("pesapal_transaction_tracking_id", $transaction_id);
-          $request_status->sign_request($signature_method, $consumer, $token);
+          $request_status->sign_request($this->signature_method, $this->consumer, $this->token);
           
-          $result = wp_remote_get( $request_status );
+          return $this->checkTransactionStatus($merchant_ref);
+          //return $this->checkTransactionStatus($merchant_ref,$transaction_id);
+          //return $this->getTransactionDetails($merchant_ref,$transaction_id);
           
-          //curl request
-          // $ajax_req =  new XMLHttpRequest();
-          // $ajax_req->open("GET",$request_status);
-          // $ajax_req->send();
-          //if curl request successful
-          
-          
-          if ($result['response']['code'] == 200) {
-            $elements = preg_split("/=/",$result['body']);
-            return $elements[1];
-          }
-          return false;
+        
         }
+        
+        /**
+         * Check Transaction status
+         *
+         * @return PENDING/FAILED/INVALID
+         * @author PesaPal
+         **/
+        function checkTransactionStatus($pesapalMerchantReference,$pesapalTrackingId = NULL){
+            if($pesapalTrackingId)
+              $queryURL = $this->QueryPaymentStatus;
+            else
+              $queryURL = $this->QueryPaymentStatusByMerchantRef;
+              
+            //get transaction status
+            $request_status = OAuthRequest::from_consumer_and_token(
+                                $this->consumer, 
+                                $this->token, 
+                                "GET", 
+                                $queryURL, 
+                                $this->params
+                              );
+            
+            $request_status->set_parameter("pesapal_merchant_reference", $pesapalMerchantReference);
+            
+            if($pesapalTrackingId)
+              $request_status->set_parameter("pesapal_transaction_tracking_id",$pesapalTrackingId);
+              
+            $request_status->sign_request($this->signature_method, $this->consumer, $this->token);
+          
+            return $this->curlRequest($request_status);
+	}
+	
+        /**
+         * Check Transaction status
+         *
+         * @return PENDING/FAILED/INVALID
+         * @author PesaPal
+         **/
+	function getTransactionDetails($pesapalMerchantReference,$pesapalTrackingId){
 
+            $request_status = OAuthRequest::from_consumer_and_token(
+                                $this->consumer, 
+                                $this->token, 
+                                "GET", 
+                                $this->querypaymentdetails, 
+                                $this->params
+                              );
+            
+            $request_status->set_parameter("pesapal_merchant_reference", $pesapalMerchantReference);
+            $request_status->set_parameter("pesapal_transaction_tracking_id",$pesapalTrackingId);
+            $request_status->sign_request($this->signature_method, $this->consumer, $this->token);
+          
+            $responseData = $this->curlRequest($request_status);
+                  
+            $pesapalResponse = explode(",", $responseData);
+            $pesapalResponseArray=array('pesapal_transaction_tracking_id'=>$pesapalResponse[0],
+                                        'payment_method'=>$pesapalResponse[1],
+                                        'status'=>$pesapalResponse[2],
+                                        'pesapal_merchant_reference'=>$pesapalResponse[3]
+                                      );
+                                     
+            return $pesapalResponseArray;
+	}
+	
+        /**
+         * Check Transaction status
+         *
+         * @return ARRAY
+         * @author PesaPal
+         **/
+	function curlRequest($request_status){
+		
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $request_status);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_HEADER, 1);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		if(defined('CURL_PROXY_REQUIRED')) if (CURL_PROXY_REQUIRED == 'True'){
+			$proxy_tunnel_flag = (
+					defined('CURL_PROXY_TUNNEL_FLAG') 
+					&& strtoupper(CURL_PROXY_TUNNEL_FLAG) == 'FALSE'
+				) ? false : true;
+			curl_setopt ($ch, CURLOPT_HTTPPROXYTUNNEL, $proxy_tunnel_flag);
+			curl_setopt ($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+			curl_setopt ($ch, CURLOPT_PROXY, CURL_PROXY_SERVER_DETAILS);
+		}
+		
+		$response     = curl_exec($ch);
+		$header_size  = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+		$raw_header   = substr($response, 0, $header_size - 4);
+		$headerArray  = explode("\r\n\r\n", $raw_header);
+		$header       = $headerArray[count($headerArray) - 1];
+		
+		//transaction status
+		$elements = preg_split("/=/",substr($response, $header_size));
+		$pesapal_response_data = $elements[1];
+		
+            return $pesapal_response_data;
+	
+	}
+        
         /**
          * IPN Response
          *
          * @return null
          * @author Jake Lee Kennedy
          **/
-        function ipn_response()
-        {
-          @ob_clean();
+        function ipn_response(){
+          
+          $pesapalTrackingId 		= '';
+          $pesapalNotification 		= '';
+          $pesapalMerchantReference	= '';
+	
+          if(isset($_GET['pesapal_merchant_reference']))
+                  $pesapalMerchantReference = $_GET['pesapal_merchant_reference'];
+                  
+          if(isset($_GET['pesapal_transaction_tracking_id']))
+                  $pesapalTrackingId = $_GET['pesapal_transaction_tracking_id'];
+                  
+          if(isset($_GET['pesapal_notification_type']))
+                  $pesapalNotification=$_GET['pesapal_notification_type'];
+                  
+                  
+          /** check status of the transaction made
+            *There are 3 available API
+            *checkStatusUsingTrackingIdandMerchantRef() - returns Status only. 
+            *checkStatusByMerchantRef() - returns status only.
+            *getMoreDetails() - returns status, payment method, merchant reference and pesapal tracking id
+          */
+                  
+          //$status	        = $this->checkTransactionStatus($pesapalMerchantReference);
+          //$status 	        = $this->checkTransactionStatus($pesapalMerchantReference,$pesapalTrackingId);
+          $transactionDetails	= $this->getTransactionDetails($pesapalMerchantReference,$pesapalTrackingId);
+          $order                = &new WC_Order($pesapalMerchantReference);
+           
+          // We are here so lets check status and do actions
+	        switch ( $transactionDetails['status'] ) {
+	            case 'COMPLETED' :
+	            case 'PENDING' :
 
-          error_log(print_r($_GET, true));
+	            	// Check order not already completed
+	            	if ( $order->status == 'completed' ) {
+	            		 if ( 'yes' == $this->debug )
+	            		 	$this->log->add( 'pesapal', 'Aborting, Order #' . $order->id . ' is already complete.' );
+	            		 exit;
+	            	}
 
-          if(!empty($_GET['pesapal_notification_type'])&&!empty($_GET['pesapal_transaction_tracking_id'])&&!empty($_GET['pesapal_merchant_reference'])) {
-            if($_GET['pesapal_notification_type']==='CHANGE') {
+	                if ( $transactionDetails['status'] == 'COMPLETED' ) {
+	                	$order->add_order_note( __( 'IPN payment completed', 'woocommerce' ) );
+	                	$order->payment_complete();
+	                } else {
+	                	$order->update_status( 'on-hold', sprintf( __( 'Payment pending: %s', 'woocommerce' ), 'Waiting PesaPal confirmation' ) );
+	                }
 
-              status_header(200);
-              nocache_headers();
-              header( 'Content-Type: text/plain; charset=utf-8' );
-              
-              // Get rid of first query param
-              echo substr($_SERVER['QUERY_STRING'], 26);
-              
-              $this->process_valid_ipn_request($_GET['pesapal_transaction_tracking_id'], $_GET['pesapal_merchant_reference']);
+	            	if ( 'yes' == $this->debug )
+	                	$this->log->add( 'pesapal', 'Payment complete.' );
 
-              die();
+	            break;
+	            case 'INVALID' :
+	            case 'FAILED' :
+	                // Order failed
+	                $order->update_status( 'failed', sprintf( __( 'Payment %s via IPN.', 'woocommerce' ), strtolower( $transactionDetails['status'] ) ) );
+	            break;
 
-            } else {
-              wp_die( "Pesapal IPN Request Failure" );
-            }
-          } else {
-            wp_die( "Pesapal IPN Request Failure" );
-          }
+	            default :
+	            	// No action
+	            break;
+	        }
+
+          $order      = &new WC_Order($pesapalMerchantReference);
+          $newstatus  = $order->status;
+
+	
+          if($transactionDetails['status']  == $newstatus) $dbupdated = "True"; else  $dbupdated = 'False';
+
+          if($pesapalNotification =="CHANGE" && $dbupdated && $transactionDetails['status'] != "PENDING"){    
+                  
+                $resp	= "pesapal_notification_type=$pesapalNotification".		
+                          "&pesapal_transaction_tracking_id=$pesapalTrackingId".
+                          "&pesapal_merchant_reference=$pesapalMerchantReference";
+                                            
+                ob_start();
+                echo $resp;
+                ob_flush();
+                exit;
+          }      
         }
 
-
-        function process_valid_ipn_request($ttid, $merchant_ref)
-        {
-
-          $order = &new WC_Order( $merchant_ref );
-
-          if($order->status==="pending") {
-
-            $status = $this->status_request($ttid, $merchant_ref);
-
-            switch ($status) {
-              case 'COMPLETED':
-                // hooray payment complete
-                $order->add_order_note( __('Payment confirmed.', 'woothemes') );
-                $order->payment_complete(); 
-                break;
-              case 'FAILED':
-                // aw, payment failed
-                $order->update_status('failed',  __('Payment denied by gateway.', 'woocommerce'));
-                break;
-            }
-          }
-        }
           
       } // END WC_Pesapal_Gateway Class
     
