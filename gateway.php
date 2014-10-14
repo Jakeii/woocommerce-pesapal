@@ -507,17 +507,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
             Email=\"" . $pesapal_args['email'] . "\"
             PhoneNumber=\"" . $pesapal_args['phone'] . "\"
             Currency=\"" . get_woocommerce_currency() . "\"
-            xmlns=\"http://www.pesapal.com\" />
-            <lineitems>";
-          foreach($cart as $item){
-            $xml .= "<lineitem
-                  uniqueid=\"".$item['id']."\"
-                  particulars=\"".$item['particulars']."\"
-                  quantity=\"".$item['quantity']."\"
-                  unitcost=\"".$item['unitcost']."\"
-                  subtotal=\"".$item['subtotal']."\"></lineitem>";
-          }
-          $xml .= "</lineitems></pesapaldirectorderinfo>";
+            xmlns=\"http://www.pesapal.com\" />";
           
           return htmlentities($xml);
         }
