@@ -348,7 +348,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
         function process_payment( $order_id ) {
           global $woocommerce;
         
-          $order = &new WC_Order( $order_id );
+          $order = new WC_Order( $order_id );
         
           // Redirect to payment page
           return array(
@@ -386,7 +386,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           if(isset($_GET['pesapal_transaction_tracking_id'])){
             
             $order_id = $_GET['order'];
-            $order    = &new WC_Order( $order_id );
+            $order    = new WC_Order( $order_id );
             $pesapalMerchantReference = $_GET['pesapal_merchant_reference'];
             $pesapalTrackingId        = $_GET['pesapal_transaction_tracking_id'];
             
@@ -430,7 +430,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 
             foreach($checks as $check){
             
-              $order = &new WC_Order( $check->order_id );
+              $order = new WC_Order( $check->order_id );
             
               $status = $this->status_request($check->tracking_id, $check->order_id);
             
@@ -458,7 +458,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
          * @author Jake Lee Kennedy
          **/
         function create_url($order_id){
-          $order            = &new WC_Order( $order_id );
+          $order            = new WC_Order( $order_id );
           $order_xml        = $this->pesapal_xml($order_id);
           $callback_url     = add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('pay'))));
           
@@ -480,7 +480,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
          **/
         function pesapal_xml($order_id) {
           
-          $order                      = &new WC_Order( $order_id );
+          $order                      = new WC_Order( $order_id );
           $pesapal_args['total']      = $order->get_total();
           $pesapal_args['reference']  = $order_id;
           $pesapal_args['first_name'] = $order->billing_first_name;
@@ -671,7 +671,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           //$status	        = $this->checkTransactionStatus($pesapalMerchantReference);
           //$status 	        = $this->checkTransactionStatus($pesapalMerchantReference,$pesapalTrackingId);
           $transactionDetails	= $this->getTransactionDetails($pesapalMerchantReference,$pesapalTrackingId);
-          $order                = &new WC_Order($pesapalMerchantReference);
+          $order                = new WC_Order($pesapalMerchantReference);
            
           // We are here so lets check status and do actions
 	        switch ( $transactionDetails['status'] ) {
@@ -707,7 +707,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 	            break;
 	        }
 
-          $order      = &new WC_Order($pesapalMerchantReference);
+          $order      = new WC_Order($pesapalMerchantReference);
           $newstatus  = $order->status;
 
 	
