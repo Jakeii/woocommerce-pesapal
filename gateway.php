@@ -8,6 +8,8 @@ Author: Jake Lee Kennedy
 Author URI: http://bodhi.io
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
+WC requires at least: 3.0.0
+WC tested up to: 3.2.0
 
 Copyright 2012  Jake Lee Kennedy  (email : jake@bodhi.io)
 
