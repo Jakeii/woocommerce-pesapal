@@ -330,7 +330,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
         function thankyou_page($order_id) {
           global $woocommerce;
           
-          $order = new wc_get_order( $order_id );
+          $order = wc_get_order( $order_id );
           
           // Remove cart
           $woocommerce->cart->empty_cart();
@@ -485,10 +485,10 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           $order                      = new wc_get_order( $order_id );
           $pesapal_args['total']      = $order->get_total();
           $pesapal_args['reference']  = $order_id;
-          $pesapal_args['first_name'] = $order->billing_first_name;
-          $pesapal_args['last_name']  = $order->billing_last_name;
-          $pesapal_args['email']      = $order->billing_email;
-          $pesapal_args['phone']      = $order->billing_phone;
+          $pesapal_args['first_name'] = $order->billing_first_name();
+          $pesapal_args['last_name']  = $order->billing_last_name();
+          $pesapal_args['email']      = $order->billing_email();
+          $pesapal_args['phone']      = $order->billing_phone();
           
           $i = 0;
           foreach($order->get_items() as $item){
