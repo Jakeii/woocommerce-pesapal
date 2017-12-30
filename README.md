@@ -9,6 +9,7 @@ If you like this plugin consider [donating](http://jakeii.github.com/woocommerce
 ##Requirements
 (Same as Woocommerce)
 * Wordpress 3.3+
+* Woocommerce 3+
 * PHP 5.2.4+
 * MySQl 5.0+
 
