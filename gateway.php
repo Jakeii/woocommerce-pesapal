@@ -11,7 +11,7 @@ License URI: http://www.gnu.org/licenses/gpl-3.0.html
 Requires at least: 3.3
 Tested up to: 4.9.1
 WC requires at least: 3.0.0
-WC tested up to: 3.2.0
+WC tested up to: 3.2.6
 
 Copyright 2012  Jake Lee Kennedy  (email : jake@bodhi.io)
 
