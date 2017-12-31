@@ -160,8 +160,8 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           // Gateway payment URLs
           $this->gatewayURL                       = $api.'api/PostPesapalDirectOrderV4';
           $this->QueryPaymentStatus 		  = $api.'API/QueryPaymentStatus';
-	  $this->QueryPaymentStatusByMerchantRef  = $api.'API/QueryPaymentStatusByMerchantRef';
-	  $this->querypaymentdetails 		  = $api.'API/querypaymentdetails';
+          $this->QueryPaymentStatusByMerchantRef  = $api.'API/QueryPaymentStatusByMerchantRef';
+          $this->querypaymentdetails 		  = $api.'API/querypaymentdetails';
 
           // IPN Request URL
           $this->notify_url   = str_replace( 'https:', 'http:', add_query_arg( 'wc-api', 'WC_Pesapal_Gateway', home_url( '/' ) ) );
