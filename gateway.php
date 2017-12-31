@@ -264,7 +264,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
         
           <h3><?php _e('Pesapal Payment', 'woothemes'); ?></h3>
           <p>
-            <?php _e('Allows use of the Pesapal Payment Gateway, all you need is an account at pesapal.com and your consumer and secret key.<br />', 'woothemes'); ?>
+            <?php _e('Allows use of the Pesapal Payment Gateway. All you need is your consumer and secret key from an active account at pesapal.com<br />', 'woothemes'); ?>
             <?php _e('<a href="http://docs.woothemes.com/document/managing-orders/">Click here </a> to learn about the various woocommerce Payment statuses.<br /><br />', 'woothemes');?>
             <?php _e('<strong>Developer: </strong>Jakeii<br />', 'woothemes'); ?>
             <?php _e('<strong>Contributors: </strong>PesaPal<br />', 'woothemes'); ?>
