@@ -8,8 +8,10 @@ Author: Jake Lee Kennedy
 Author URI: http://bodhi.io
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
+Requires at least: 3.3
+Tested up to: 4.9.1
 WC requires at least: 3.0.0
-WC tested up to: 3.2.0
+WC tested up to: 3.2.6
 
 Copyright 2012  Jake Lee Kennedy  (email : jake@bodhi.io)
 
@@ -160,8 +162,8 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           // Gateway payment URLs
           $this->gatewayURL                       = $api.'api/PostPesapalDirectOrderV4';
           $this->QueryPaymentStatus 		  = $api.'API/QueryPaymentStatus';
-	  $this->QueryPaymentStatusByMerchantRef  = $api.'API/QueryPaymentStatusByMerchantRef';
-	  $this->querypaymentdetails 		  = $api.'API/querypaymentdetails';
+          $this->QueryPaymentStatusByMerchantRef  = $api.'API/QueryPaymentStatusByMerchantRef';
+          $this->querypaymentdetails 		  = $api.'API/querypaymentdetails';
 
           // IPN Request URL
           $this->notify_url   = str_replace( 'https:', 'http:', add_query_arg( 'wc-api', 'WC_Pesapal_Gateway', home_url( '/' ) ) );
@@ -262,7 +264,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
         
           <h3><?php _e('Pesapal Payment', 'woothemes'); ?></h3>
           <p>
-            <?php _e('Allows use of the Pesapal Payment Gateway, all you need is an account at pesapal.com and your consumer and secret key.<br />', 'woothemes'); ?>
+            <?php _e('Allows use of the Pesapal Payment Gateway. All you need is your consumer and secret key from an active account at pesapal.com<br />', 'woothemes'); ?>
             <?php _e('<a href="http://docs.woothemes.com/document/managing-orders/">Click here </a> to learn about the various woocommerce Payment statuses.<br /><br />', 'woothemes');?>
             <?php _e('<strong>Developer: </strong>Jakeii<br />', 'woothemes'); ?>
             <?php _e('<strong>Contributors: </strong>PesaPal<br />', 'woothemes'); ?>

@@ -1,4 +1,4 @@
-#Pesapal Plugin for Woocommerce beta - Version 2.0.0
+# Pesapal Plugin for Woocommerce beta - Version 2.0.0
 
 Simple and easy to use plugin for pesapal.com payment gateway.
 
@@ -6,14 +6,15 @@ Please raise any issues though github, thanks.
 
 If you like this plugin consider [donating](http://jakeii.github.com/woocommerce-pesapal) a few bob for a coffee :)
 
-##Requirements
-(Same as Woocommerce)
+## Requirements
+
+Same as Woocommerce 3+. Namely: 
 * Wordpress 3.3+
 * Woocommerce 3+
 * PHP 5.2.4+
 * MySQl 5.0+
 
-##Installation
+## Installation
 Install by simply searching for the plugin within the wordpress plugin repository.
 
 **OR**
@@ -24,12 +25,12 @@ Install by simply searching for the plugin within the wordpress plugin repositor
 * Enable the gateway.
 * **Test before production!**
 
-##Note
+## Note
 Not using an iframe has been disabled/removed because it causes to much trouble.
 
 It is recommend that you enable IPN in the plugins settings page, as there are some issues with checking periodically for order updates.
 
-##Licence
+## Licence
 Copyright &copy; 2012 Jake Lee Kennedy, Licensed under GPLv3
 
 This program is free software; you can redistribute it and/or modify
