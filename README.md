@@ -1,4 +1,4 @@
-# Pesapal Plugin for Woocommerce beta - Version 2.0.0
+# Pesapal Plugin for Woocommerce beta - Version 2.1.0
 
 Simple and easy to use plugin for pesapal.com payment gateway.
 

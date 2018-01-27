@@ -3,13 +3,13 @@
 Plugin Name: Woocommerce Pesapal Payment Gateway
 Plugin URI: http://bodhi.io
 Description: Allows use of kenyan payment processor Pesapal - http://pesapal.com.
-Version: 2.0.0
+Version: 2.1.0
 Author: Jake Lee Kennedy
 Author URI: http://bodhi.io
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 Requires at least: 3.3
-Tested up to: 4.9.1
+Tested up to: 4.9.2
 WC requires at least: 3.0.0
 WC tested up to: 3.2.6
 
@@ -41,16 +41,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
   define( 'PLUGIN_DIR', dirname(__FILE__).'/' );
   require_once(PLUGIN_DIR . 'libs/OAuth.php');
 
-  //Woocommerce doesn't have KES by default so add it if not already added
-  add_filter( 'woocommerce_currencies', 'add_kenya_shilling' );
-
-  function add_kenya_shilling( $currencies ) {
-    if(!isset($currencies['KES'])||!isset($currencies['KSH'])){
-       $currencies['KES'] = __( 'Kenyan Shilling', 'woocommerce' );
-       
-       return $currencies;
-      }
-  }
+ 
 
   add_filter('woocommerce_currency_symbol', 'add_kenya_shilling_symbol', 10, 2);
   function add_kenya_shilling_symbol( $currency_symbol, $currency ) {
@@ -162,8 +153,8 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           // Gateway payment URLs
           $this->gatewayURL                       = $api.'api/PostPesapalDirectOrderV4';
           $this->QueryPaymentStatus 		  = $api.'API/QueryPaymentStatus';
-          $this->QueryPaymentStatusByMerchantRef  = $api.'API/QueryPaymentStatusByMerchantRef';
-          $this->querypaymentdetails 		  = $api.'API/querypaymentdetails';
+	  $this->QueryPaymentStatusByMerchantRef  = $api.'API/QueryPaymentStatusByMerchantRef';
+	  $this->querypaymentdetails 		  = $api.'API/querypaymentdetails';
 
           // IPN Request URL
           $this->notify_url   = str_replace( 'https:', 'http:', add_query_arg( 'wc-api', 'WC_Pesapal_Gateway', home_url( '/' ) ) );
@@ -178,7 +169,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           // Actions
           add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
           add_action('woocommerce_receipt_pesapal', array(&$this, 'payment_page'));
-          add_action('before_woocommerce_pay', array(&$this, 'before_pay'));
+          // add_action('before_woocommerce_pay', array(&$this, 'before_pay'));
           add_action('woocommerce_thankyou_pesapal', array(&$this, 'thankyou_page'));
           add_action('pesapal_background_payment_checks', array($this, 'background_check_payment_status'));
           add_action( 'woocommerce_api_wc_pesapal_gateway', array( $this, 'ipn_response' ) );
@@ -264,7 +255,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
         
           <h3><?php _e('Pesapal Payment', 'woothemes'); ?></h3>
           <p>
-            <?php _e('Allows use of the Pesapal Payment Gateway. All you need is your consumer and secret key from an active account at pesapal.com<br />', 'woothemes'); ?>
+            <?php _e('Allows use of the Pesapal Payment Gateway, all you need is an account at pesapal.com and your consumer and secret key.<br />', 'woothemes'); ?>
             <?php _e('<a href="http://docs.woothemes.com/document/managing-orders/">Click here </a> to learn about the various woocommerce Payment statuses.<br /><br />', 'woothemes');?>
             <?php _e('<strong>Developer: </strong>Jakeii<br />', 'woothemes'); ?>
             <?php _e('<strong>Contributors: </strong>PesaPal<br />', 'woothemes'); ?>
@@ -330,15 +321,43 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
          * @author Jake Lee Kennedy
          **/
         function thankyou_page($order_id) {
-          global $woocommerce;
+          // global $woocommerce;
           
-          $order = wc_get_order( $order_id );
+          // $order = wc_get_order( $order_id );
           
-          // Remove cart
-          $woocommerce->cart->empty_cart();
+          // // Remove cart
+          // $woocommerce->cart->empty_cart();
           
-          // Empty awaiting payment session
-          unset($_SESSION['order_awaiting_payment']);
+          if(isset($_GET['pesapal_transaction_tracking_id'])){
+            
+            // $order_id = $_GET['order'];
+            $order    = wc_get_order( $order_id );
+            $pesapalMerchantReference = $_GET['pesapal_merchant_reference'];
+            $pesapalTrackingId        = $_GET['pesapal_transaction_tracking_id'];
+            
+            //$status	        = $this->checkTransactionStatus($pesapalMerchantReference);
+            //$status 	        = $this->checkTransactionStatus($pesapalMerchantReference,$pesapalTrackingId);
+            $transactionDetails	= $this->getTransactionDetails($pesapalMerchantReference,$pesapalTrackingId);
+
+            $order->add_order_note( __('Payment accepted, awaiting confirmation.', 'woothemes') );
+            add_post_meta( $order_id, '_order_pesapal_transaction_tracking_id', $transactionDetails['pesapal_transaction_tracking_id']);
+            add_post_meta( $order_id, '_order_pesapal_payment_method', $transactionDetails['payment_method']);
+            
+            
+            $dbUpdateSuccessful = add_post_meta( $order_id, '_order_payment_method', $transactionDetails['payment_method']);
+            
+            // if immeadiatly complete mark it so
+            if ($transactionDetails["status"] === 'COMPLETED' ) {
+              $order->add_order_note( __('Payment confirmed.', 'woothemes') );
+              $order->payment_complete();
+            } else if(!$this->ipn){
+              $tracking_id = $_GET['pesapal_transaction_tracking_id'];
+
+              global $wpdb;
+              $table_name = $wpdb->prefix . 'pesapal_queue';
+              $wpdb->insert($table_name, array('order_id' => $order_id, 'tracking_id' => $tracking_id, 'time' => current_time('mysql')), array('%d', '%s', '%s'));
+            }
+          }
                   
         }
         
@@ -352,12 +371,12 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
         function process_payment( $order_id ) {
           global $woocommerce;
         
-          $order = new wc_get_order( $order_id );
+          $order = wc_get_order( $order_id );
         
           // Redirect to payment page
           return array(
             'result'    => 'success',
-            'redirect'  => add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('pay'))))
+            'redirect'  => add_query_arg('key', $order->get_order_key(), $order->get_checkout_payment_url(true))
           );
           
         
@@ -390,7 +409,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           if(isset($_GET['pesapal_transaction_tracking_id'])){
             
             $order_id = $_GET['order'];
-            $order    = new wc_get_order( $order_id );
+            $order    = wc_get_order( $order_id );
             $pesapalMerchantReference = $_GET['pesapal_merchant_reference'];
             $pesapalTrackingId        = $_GET['pesapal_transaction_tracking_id'];
             
@@ -413,7 +432,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
               $wpdb->insert($table_name, array('order_id' => $order_id, 'tracking_id' => $tracking_id, 'time' => current_time('mysql')), array('%d', '%s', '%s'));
             }
             
-            wp_redirect(add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('thanks')))));
+            wp_redirect(add_query_arg('key', $order->get_order_key(), add_query_arg('order', $order_id, $order->get_checkout_order_received_ur())));
           }
         }
         
@@ -434,7 +453,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 
             foreach($checks as $check){
             
-              $order = new wc_get_order( $check->order_id );
+              $order = wc_get_order( $check->order_id );
             
               $status = $this->status_request($check->tracking_id, $check->order_id);
             
@@ -462,9 +481,9 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
          * @author Jake Lee Kennedy
          **/
         function create_url($order_id){
-          $order            = new wc_get_order( $order_id );
+          $order            = wc_get_order( $order_id );
           $order_xml        = $this->pesapal_xml($order_id);
-          $callback_url     = add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('pay'))));
+          $callback_url     = add_query_arg('key', $order->get_order_key(), $order->get_checkout_order_received_url());
           
           
           $url = OAuthRequest::from_consumer_and_token($this->consumer, $this->token, "GET", $this->gatewayURL, $this->params);
@@ -484,23 +503,23 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
          **/
         function pesapal_xml($order_id) {
           
-          $order                      = new wc_get_order( $order_id );
+          $order                      = wc_get_order( $order_id );
           $pesapal_args['total']      = $order->get_total();
           $pesapal_args['reference']  = $order_id;
-          $pesapal_args['first_name'] = $order->billing_first_name();
-          $pesapal_args['last_name']  = $order->billing_last_name();
-          $pesapal_args['email']      = $order->billing_email();
-          $pesapal_args['phone']      = $order->billing_phone();
+          $pesapal_args['first_name'] = $order->get_billing_first_name();
+          $pesapal_args['last_name']  = $order->get_billing_last_name();
+          $pesapal_args['email']      = $order->get_billing_email();
+          $pesapal_args['phone']      = $order->get_billing_phone();
           
           $i = 0;
-          foreach($order->get_items() as $item){
-            $product = $order->get_product_from_item($item);
+          foreach($order->get_items('line_item') as $item){
+            $product = $item->get_product();
             
             $cart[$i] = array(
               'id' => ($product->get_sku() ? $product->get_sku() : $product->id),
-              'particulars' => $cart_row['name'],
-              'quantity' => $item['qty'],
-              'unitcost' => $product->regular_price,
+              'particulars' => $product->get_name(),
+              'quantity' => $item->get_quantity(),
+              'unitcost' => $product->get_regular_price(),
               'subtotal' => $order->get_item_total($item, true)
             );
             $i++;
@@ -597,6 +616,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
             $responseData = $this->curlRequest($request_status);
                   
             $pesapalResponse = explode(",", $responseData);
+
             $pesapalResponseArray=array('pesapal_transaction_tracking_id'=>$pesapalResponse[0],
                                         'payment_method'=>$pesapalResponse[1],
                                         'status'=>$pesapalResponse[2],
@@ -617,7 +637,8 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $request_status);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_HEADER, 1);
+    curl_setopt($ch, CURLOPT_HEADER, 1);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 		if(defined('CURL_PROXY_REQUIRED')) if (CURL_PROXY_REQUIRED == 'True'){
 			$proxy_tunnel_flag = (
@@ -634,7 +655,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 		$raw_header   = substr($response, 0, $header_size - 4);
 		$headerArray  = explode("\r\n\r\n", $raw_header);
 		$header       = $headerArray[count($headerArray) - 1];
-		
+
 		//transaction status
 		$elements = preg_split("/=/",substr($response, $header_size));
 		$pesapal_response_data = $elements[1];
@@ -675,7 +696,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
           //$status	        = $this->checkTransactionStatus($pesapalMerchantReference);
           //$status 	        = $this->checkTransactionStatus($pesapalMerchantReference,$pesapalTrackingId);
           $transactionDetails	= $this->getTransactionDetails($pesapalMerchantReference,$pesapalTrackingId);
-          $order                = new wc_get_order($pesapalMerchantReference);
+          $order                = wc_get_order($pesapalMerchantReference);
            
           // We are here so lets check status and do actions
 	        switch ( $transactionDetails['status'] ) {
@@ -683,7 +704,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 	            case 'PENDING' :
 
 	            	// Check order not already completed
-	            	if ( $order->status == 'completed' ) {
+	            	if ( $order->get_status() == 'completed' ) {
 	            		 if ( 'yes' == $this->debug )
 	            		 	$this->log->add( 'pesapal', 'Aborting, Order #' . $order->id . ' is already complete.' );
 	            		 exit;
@@ -711,8 +732,8 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 	            break;
 	        }
 
-          $order      = new wc_get_order($pesapalMerchantReference);
-          $newstatus  = $order->status;
+          $order      = wc_get_order($pesapalMerchantReference);
+          $newstatus  = $order->get_status();
 
 	
           if($transactionDetails['status']  == $newstatus) $dbupdated = "True"; else  $dbupdated = 'False';
