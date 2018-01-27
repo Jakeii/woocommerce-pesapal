@@ -4,7 +4,7 @@ Donate link: http://jakeii.github.com/woocommerce-pesapal/
 Tags: pesapal, woocommerce, ecommerce, gateway, payment
 Requires at least: 3.3
 Tested up to: 4.9.2
-Stable tag: 2.1.0
+Stable tag: 2.1.1
 WC requires at least: 3.0.0
 WC tested up to: 3.2.6
 License: GPLv3 or later
