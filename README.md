@@ -15,7 +15,7 @@ Same as Woocommerce 3+. Namely:
 * MySQl 5.0+
 
 ## Installation
-Install by simply searching for the plugin within the wordpress plugin repository.
+Install from the wordpress plugin repository at https://wordpress.org/plugins/pesapal-for-woocommerce/
 
 **OR**
 
